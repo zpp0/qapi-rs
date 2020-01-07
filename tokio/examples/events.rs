@@ -1,5 +1,3 @@
-#![feature(async_await, await_macro)]
-
 #[cfg(feature = "qmp")]
 mod main {
     use std::env::args;
@@ -14,12 +12,12 @@ mod main {
         let socket_addr = args().nth(1).expect("argument: QMP socket path");
 
         tokio::run(async {
-            let socket = await!(tokio_uds::UnixStream::connect(socket_addr).compat())?;
-            let (caps, _stream, events) = await!(tokio_qapi::QapiStream::open_tokio(socket))?;
+            let socket = tokio_uds::UnixStream::connect(socket_addr).compat().await?;
+            let (caps, _stream, events) = tokio_qapi::QapiStream::open_tokio(socket).await?;
             println!("{:#?}", caps);
 
             let mut events = events.into_stream().boxed();
-            while let Some(event) = await!(events.next()) {
+            while let Some(event) = events.next().await {
                 println!("Got event {:#?}", event?);
             }
 

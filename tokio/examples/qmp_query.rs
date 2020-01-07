@@ -1,5 +1,3 @@
-#![feature(async_await, await_macro)]
-
 #[cfg(feature = "qmp")]
 mod main {
     use std::env::args;
@@ -13,14 +11,14 @@ mod main {
         let socket_addr = args().nth(1).expect("argument: QMP socket path");
 
         tokio::run(async {
-            let socket = await!(tokio_uds::UnixStream::connect(socket_addr).compat())?;
-            let (caps, stream, events) = await!(tokio_qapi::QapiStream::open_tokio(socket))?;
+            let socket = tokio_uds::UnixStream::connect(socket_addr).compat().await?;
+            let (caps, stream, events) = tokio_qapi::QapiStream::open_tokio(socket).await?;
             println!("{:#?}", caps);
 
             let (events, abort) = abortable(events.spin());
             tokio::spawn(events.map_err(drop).boxed().compat());
 
-            let status = await!(stream.execute(tokio_qapi::qmp::query_status { }))??;
+            let status = stream.execute(tokio_qapi::qmp::query_status {}).await??;
             println!("VCPU status: {:#?}", status);
 
             abort.abort();
