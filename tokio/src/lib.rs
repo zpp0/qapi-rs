@@ -231,8 +231,9 @@ impl<W: AsyncWrite + Unpin> QapiStream<W> {
     }
 
     async fn negotiate_caps<'a, R: AsyncBufReadExt + Unpin>(&'a self, events: &'a mut QapiEvents<R>, caps: Vec<qmp::QMPCapability>) -> io::Result<()> {
+        let caps = if !caps.is_empty() { Some(caps) } else { None };
         let caps = self.execute(qmp::qmp_capabilities {
-            enable: Some(caps),
+            enable: caps,
         }).and_then(|res| future::ready(res.map_err(From::from))).map_err(|err| unimplemented!("negotiation error {:?}", err));
         let events = events.process_message().and_then(|msg| future::ready(match msg {
             QapiEventsMessage::Response { id } => Ok(()),
